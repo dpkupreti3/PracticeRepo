@@ -1,0 +1,49 @@
+import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Logging all methods of the Classes
+ * author Deepak Upreti
+ *
+ */
+@Aspect
+@Component
+@Slf4j
+public class LoggingAspect {
+
+  @Value(value = "${name-pattern}")
+  private static final String NAME_PATTERN = StringUtils.EMPTY;
+
+  /**
+   * 
+   * @param proceedingJoinPoint ProceedingJoinPoint
+   * @return result object type
+   * @throws Throwable throwable
+   */
+  @Around("execution(* " + NAME_PATTERN + "..*.*(..)))")
+  public Object logAllMethods(ProceedingJoinPoint proceedingJoinPoint) {
+    Object result = null;
+
+      MethodSignature methodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
+
+      String className = methodSignature.getDeclaringType().getSimpleName();
+      String methodName = methodSignature.getName();
+
+      log.debug("Entering in the method of class {} -> " + methodName, className);
+      try {
+        result = proceedingJoinPoint.proceed();
+      } catch (Throwable e) {
+        throw new ResourceNotFoundException();
+      }
+      log.debug("Exiting in the method of class {} -> " + methodName, className);
+    
+    return result;
+  }
+}
